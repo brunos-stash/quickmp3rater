@@ -23,7 +23,9 @@ class FinderBox(Listbox):
         self.bind('<Left>', func=self.prev)
         self.bind('<Right>', func=self.next)
         # self.bind('<Return>', func=self.play)
-        self.current_mp3id = 3
+        self.current_mp3id = 1
+        self.next_mp3id = 2
+        # self.mp3 = vlc.MediaPlayer()
         # self.selectpath()
     
     def selectpath(self):
@@ -41,6 +43,8 @@ class FinderBox(Listbox):
             self.insert(END, r)
             self.yview(END)
             self.update()
+
+        # self.mp3 = vlc.MediaPlayer
     
     def _mp3_as_uri(self):
         f = self.get(self.current_mp3id)
@@ -51,37 +55,36 @@ class FinderBox(Listbox):
         print(self.current_mp3uri)
 
     def play(self, *event):
-        mp3id = self.current_mp3id
-        next_mp3 = self.next_mp3id
-        print(mp3id, next_mp3)
-        if mp3id != next_mp3:
-            
-        self._mp3_as_uri()
-        uri = self.current_mp3uri
-        self.mp3 = vlc.MediaPlayer(uri)
-        if self.mp3.is_playing():
-            self.mp3.stop()
+        id = self.current_mp3id
+        nid = self.next_mp3id
+        print(id, nid)
+        if id != nid:
+            id = nid
+            self._mp3_as_uri()
+            uri = self.current_mp3uri
+            self.mp3 = vlc.MediaPlayer(uri)
+            self.mp3.start()
         else:
-            self.mp3.play()
+            if self.mp3.is_playing():
+                self.mp3.stop()
+            else:
+                self.mp3.play()
 
     def next(self, *event):
         id = self.current_mp3id
-        if self.mp3:
-            self.mp3.stop()
-        id += 1
-        if id > (self.size()-1):
-            self.next_mp3id = 0
+        nid = id + 1
+        if nid > self.size():
+            nid = 0
         # self._mp3_as_uri()
         # uri = self.current_mp3uri
         # self.mp3 = vlc.MediaPlayer(uri)
         self.play()
     
     def prev(self, *event):
-        if self.mp3:
-            self.mp3.stop()
-        self.current_mp3id -= 1
-        if self.current_mp3id < 0:
-            self.current_mp3id = self.size()-1
+        id = self.current_mp3id
+        nid = id - 1
+        if nid < 0:
+            id = self.size()
         self.play()
 
 
