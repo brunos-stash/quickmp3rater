@@ -1,13 +1,16 @@
-from tkinter import Tk, Frame, Listbox, filedialog, Button, END
-from tkinter import ttk
+from tkinter import Tk, Frame, Listbox, filedialog, Button, END, Menu, IntVar
+from tkinter.ttk import Progressbar
 from pathlib import Path
 import re
 import vlc
+from time import sleep
 
-from overlay import PlayerButtons
+from overlay import PlayerControl
+
+
 app = Tk()
 app.geometry("300x300")
-app.minsize(width=300,height=300)
+app.minsize(width=500,height=300)
 app.title('Quick MP3 Rate')
 
 class MainFrame(Frame):
@@ -15,17 +18,29 @@ class MainFrame(Frame):
         super().__init__(master=master, **kw)
         self.pack(expand=True, fill='both')
 
+
+class FindBtn(Button):
+    def __init__(self, master=None, **kw):
+        super().__init__(master=master, **kw)
+        self.pack()
+
 class FinderBox(Listbox):
     def __init__(self, master=None, **kw):
         super().__init__(master=master, **kw)
         self.pack(expand=True, fill='both')
-        self.bind('<Return>', func=self.play)
-        self.bind('<Left>', func=self.prev)
-        self.bind('<Right>', func=self.next)
+        self.bind('<space>', func=self.play)
+        self.bind('<Up>', func=self.prev)
+        self.bind('<Down>', func=self.next)
+        self.bind('<Right>', func=self.forward)
+        self.bind('<Left>', func=self.backward)
         # self.bind('<Return>', func=self.play)
-        self.current_mp3id = 1
-        self.next_mp3id = 2
-        # self.mp3 = vlc.MediaPlayer()
+        self.current_mp3id = 0
+        self.next_mp3id = 1
+        self.mp3 = vlc.MediaPlayer()
+        # self.selection = 0
+        # self.activate(self.selection)
+        # self.mp3 = vlc.MediaPlayer('file:///C:/Users/Bruno/Downloads/David%20Goggins/Cant%20Hurt%20Me/Cant%20Hurt%20Me%20-%20David%20Goggins.mp3')
+        # self.mp3.start()
         # self.selectpath()
     
     def selectpath(self):
@@ -34,18 +49,19 @@ class FinderBox(Listbox):
         self.search()
     
     def search(self):
-        results = self.searchpath.glob('*.mp3')
-        for r in results:
-            self.insert(END, r)
-            self.update()
+        # results = self.searchpath.glob('*.mp3')
+        # for r in results:
+        #     self.insert(END, r)
+        #     self.update()
         results2 = self.searchpath.rglob('**/*.mp3')
         for r in results2:
             self.insert(END, r)
             self.yview(END)
             self.update()
+        self._mp3_as_uri()
+        self.mp3 = vlc.MediaPlayer(self.current_mp3uri)
+        # self.time = IntVar(master=self, value=self.mp3.get_time())
 
-        # self.mp3 = vlc.MediaPlayer
-    
     def _mp3_as_uri(self):
         f = self.get(self.current_mp3id)
         fp = Path(f)
@@ -55,48 +71,83 @@ class FinderBox(Listbox):
         print(self.current_mp3uri)
 
     def play(self, *event):
+        print('selection: ',self.curselection())
         id = self.current_mp3id
         nid = self.next_mp3id
+        # id, *_ = self.curselection()
+        # nid, *_ = self.curselection()
+        # self.activate(nid)
         print(id, nid)
         if id != nid:
-            id = nid
+            # self.activate(nid)
+            self.mp3.stop()
+            self.current_mp3id = nid
+            # self.activate(nid)
             self._mp3_as_uri()
             uri = self.current_mp3uri
             self.mp3 = vlc.MediaPlayer(uri)
-            self.mp3.start()
+            self.mp3.play()
         else:
             if self.mp3.is_playing():
-                self.mp3.stop()
+                self.mp3.pause()
             else:
                 self.mp3.play()
 
     def next(self, *event):
-        id = self.current_mp3id
+        # id = self.current_mp3id
+        id, *_ = self.curselection()
         nid = id + 1
-        if nid > self.size():
-            nid = 0
+        if nid > (self.size()-1):
+            self.next_mp3id = 0
+            # self.activate(0)
+        else:
+            self.next_mp3id = nid
+            # self.activate(nid)
         # self._mp3_as_uri()
         # uri = self.current_mp3uri
         # self.mp3 = vlc.MediaPlayer(uri)
         self.play()
+        # sleep(0.1)
     
     def prev(self, *event):
-        id = self.current_mp3id
+        # id = self.current_mp3id
+        id, *_ = self.curselection()
         nid = id - 1
         if nid < 0:
-            id = self.size()
+            self.next_mp3id = (self.size()-1)
+            # self.activate(self.next_mp3id)
+        else:
+            self.next_mp3id = nid
+            # self.activate(nid)
+
         self.play()
+        # sleep(0.1)
 
-
-class FindBtn(Button):
-    def __init__(self, master=None, **kw):
-        super().__init__(master=master, **kw)
-        self.pack()
-
-
+    def forward(self, *event):
+        ct = self.mp3.get_time()
+        length = self.mp3.get_length()
+        nt = ct + 1000
+        if nt > length:
+            self.mp3.stop()
+            return
+        self.mp3.set_time(nt)
+    
+    def backward(self, *event):
+        ct = self.mp3.get_time()
+        length = self.mp3.get_length()
+        nt = ct - 1000
+        if nt < 0:
+            nt = 0
+        self.mp3.set_time(nt)
 
 mf = MainFrame(master=app)
+m1 = Menu(master=app)
+app.config(menu=m1)
 lb = FinderBox(master=mf,yscrollcommand=True)
-b1 = Button(master=mf, text='select',command=lb.selectpath)
-b1.pack()
+m1.add_command(label='Search', command=lb.selectpath)
+control = PlayerControl(master=mf, box=lb)
+# b1 = FindBtn(master=mf, text='Search',command=lb.selectpath)
+# b2 = FindBtn(master=mf, text='Search',command=lb.selectpath)
+# b1.pack()
+# b2.pack()
 app.mainloop()
