@@ -53,15 +53,6 @@ class FinderBox(Listbox):
     def __init__(self, master=None, **kw):
         super().__init__(master=master, **kw)
         self.pack(expand=True, fill='both')
-        self.bind('<space>', func=self.play)
-        self.bind('<Up>', func=self.prev)
-        self.bind('<Down>', func=self.next)
-        self.bind('<Right>', func=self.forward)
-        self.bind('<Left>', func=self.backward)
-        # self.bind('<Return>', func=self.play)
-        self.current_mp3id = 0
-        self.next_mp3id = 1
-        self.mp3 = vlc.MediaPlayer()
         self.entries = None
         # self.selection = 0
         # self.activate(self.selection)
@@ -96,6 +87,19 @@ class FinderBox(Listbox):
         print(fp)
         print(type(fp))
         print(self.current_mp3uri)
+
+class Controller(FinderBox):
+    def __init__(self, master=None, **kw):
+        super().__init__(master=master, **kw)
+        self.bind('<space>', func=self.play)
+        self.bind('<Up>', func=self.prev)
+        self.bind('<Down>', func=self.next)
+        self.bind('<Right>', func=self.forward)
+        self.bind('<Left>', func=self.backward)
+        self.bind('<Return>', func=self.change_favorite)
+        self.current_mp3id = 0
+        self.next_mp3id = 1
+        self.mp3 = vlc.MediaPlayer()
 
     def play(self, *event):
         print('selection: ',self.curselection())
@@ -167,10 +171,24 @@ class FinderBox(Listbox):
             nt = 0
         self.mp3.set_time(nt)
 
+    def change_favorite(self, *event):
+        id = self.current_mp3id
+        track = self.entries[id]
+        fav = track.favorite
+        if fav:
+            track.favorite = False
+        else:
+            track.favorite = True
+        self.delete(id)
+        self.insert(id, track.text)
+        # self.activate(id)
+        self.selection_set(id)
+
 mf = MainFrame(master=app)
 m1 = Menu(master=app)
 app.config(menu=m1)
-lb = FinderBox(master=mf,yscrollcommand=True)
+# lb = FinderBox(master=mf,yscrollcommand=True)
+lb = Controller(master=mf, yscrollcommand=True)
 m1.add_command(label='Search', command=lb.selectpath)
 control = PlayerControl(master=mf, box=lb)
 # b1 = FindBtn(master=mf, text='Search',command=lb.selectpath)
