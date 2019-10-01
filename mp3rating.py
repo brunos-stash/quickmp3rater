@@ -97,22 +97,24 @@ class Controller(FinderBox):
         self.bind('<Right>', func=self.forward)
         self.bind('<Left>', func=self.backward)
         self.bind('<Return>', func=self.change_favorite)
+        self.bind('<t>', func=self.test)
         self.current_mp3id = 0
         self.next_mp3id = 1
         self.mp3 = vlc.MediaPlayer()
 
     def play(self, *event):
         print('selection: ',self.curselection())
-        id = self.current_mp3id
-        nid = self.next_mp3id
-        # id, *_ = self.curselection()
-        # nid, *_ = self.curselection()
+
+        # id = self.current_mp3id
+        # nid = self.next_mp3id
+        sid, *_ = self.curselection()
+        cid = self.current_mp3id
         # self.activate(nid)
-        print(id, nid)
-        if id != nid:
+        print(sid, cid)
+        if sid != cid:
             # self.activate(nid)
             self.mp3.stop()
-            self.current_mp3id = nid
+            self.current_mp3id = sid
             # self.activate(nid)
             self._mp3_as_uri()
             uri = self.current_mp3uri
@@ -128,30 +130,39 @@ class Controller(FinderBox):
         # id = self.current_mp3id
         id, *_ = self.curselection()
         nid = id + 1
+        self.selection_clear(id)
         if nid > (self.size()-1):
             self.next_mp3id = 0
-            # self.activate(0)
+            self.selection_set(0)
+            self.activate(0)
         else:
             self.next_mp3id = nid
-            # self.activate(nid)
+            self.selection_set(nid)
+
         # self._mp3_as_uri()
         # uri = self.current_mp3uri
         # self.mp3 = vlc.MediaPlayer(uri)
-        self.play()
+        # self.play()
         # sleep(0.1)
     
     def prev(self, *event):
         # id = self.current_mp3id
         id, *_ = self.curselection()
         nid = id - 1
+        self.selection_clear(id)
         if nid < 0:
-            self.next_mp3id = (self.size()-1)
-            # self.activate(self.next_mp3id)
+            last_id = (self.size()-1)
+            # print('last id ', last_id)
+            # self.unbind('<Up>')
+            self.next_mp3id = last_id
+            self.activate(last_id)
+            self.selection_set(last_id)
         else:
             self.next_mp3id = nid
             # self.activate(nid)
+            self.selection_set(nid)
 
-        self.play()
+        # self.play()
         # sleep(0.1)
 
     def forward(self, *event):
@@ -172,17 +183,24 @@ class Controller(FinderBox):
         self.mp3.set_time(nt)
 
     def change_favorite(self, *event):
-        id = self.current_mp3id
+        # id = self.current_mp3id
+        id, *_ = self.curselection()
+        # selection = self.curselection()
         track = self.entries[id]
         fav = track.favorite
         if fav:
             track.favorite = False
         else:
             track.favorite = True
+        self.selection_clear(id)
         self.delete(id)
         self.insert(id, track.text)
-        # self.activate(id)
+        self.activate(id)
         self.selection_set(id)
+    
+    def test(self, *event):
+        self.selection_set(14)
+        self.activate(14)
 
 mf = MainFrame(master=app)
 m1 = Menu(master=app)
