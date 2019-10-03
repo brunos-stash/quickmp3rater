@@ -192,11 +192,17 @@ class Controller(FinderBox):
         self.activate(id)
         self.selection_set(id)
     
-    def export(self):
+    def export(self, name=None):
         """Export to m3u playlist."""
-        for entry in self.entries:
-            if entry.favorite:
-                print(entry.file)
+        if not name:
+            name = 'playlist.m3u'
+        filepath = Path.cwd() / name
+        with open(filepath, 'w') as f:
+            for entry in self.entries:
+                if entry.favorite:
+                    f.write(str(entry.file))
+                    f.write('\n')
+        print('Playlist exported to: ', filepath)
 
     def test(self, *event):
         self.selection_set(14)
