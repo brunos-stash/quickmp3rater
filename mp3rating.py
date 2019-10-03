@@ -204,6 +204,16 @@ class Controller(FinderBox):
                     f.write('\n')
         print('Playlist exported to: ', filepath)
 
+    def import_playlist(self, playlist):
+        """Imports from m3u file"""
+        with open(playlist, 'w') as f:
+            filenames = {e.file:id for id, e in enumerate(self.entries)}
+            for line in f.readlines():
+                file_id = filenames.get(line)
+                if file_id:
+                    self.entries[file_id].favorite = True
+        
+
     def test(self, *event):
         self.selection_set(14)
         self.activate(14)
