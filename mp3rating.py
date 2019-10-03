@@ -32,12 +32,6 @@ class Entry:
     def favorite(self, is_favorite):
         self.is_fav = is_favorite
         self._update_text()
-    
-class Mp3List:
-    def __init__(self, iterable):
-        for i, r in enumerate(iterable):
-            e = Entry(i, r)
-            self.__setattr__(e.i, e)
         
 class MainFrame(Frame):
     def __init__(self, master=None, **kw):
@@ -198,6 +192,18 @@ class Controller(FinderBox):
         self.activate(id)
         self.selection_set(id)
     
+    def export(self, name=None):
+        """Export to m3u playlist."""
+        if not name:
+            name = 'playlist.m3u'
+        filepath = Path.cwd() / name
+        with open(filepath, 'w') as f:
+            for entry in self.entries:
+                if entry.favorite:
+                    f.write(str(entry.file))
+                    f.write('\n')
+        print('Playlist exported to: ', filepath)
+
     def test(self, *event):
         self.selection_set(14)
         self.activate(14)
@@ -206,9 +212,11 @@ mf = MainFrame(master=app)
 m1 = Menu(master=app)
 app.config(menu=m1)
 # lb = FinderBox(master=mf,yscrollcommand=True)
-lb = Controller(master=mf, yscrollcommand=True)
-m1.add_command(label='Search', command=lb.selectpath)
-control = PlayerControl(master=mf, box=lb)
+ctrl = Controller(master=mf, yscrollcommand=True)
+m1.add_command(label='Search', command=ctrl.selectpath)
+m1.add_command(label='Export', command=ctrl.export)
+
+control = PlayerControl(master=mf, box=ctrl)
 # b1 = FindBtn(master=mf, text='Search',command=lb.selectpath)
 # b2 = FindBtn(master=mf, text='Search',command=lb.selectpath)
 # b1.pack()
