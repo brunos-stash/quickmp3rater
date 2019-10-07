@@ -3,8 +3,9 @@ from tkinter.ttk import Progressbar
 from pathlib import Path
 import re
 import vlc
+from pprint import pprint
 from time import sleep
-
+from functools import partial
 from overlay import PlayerControl
 
 
@@ -56,22 +57,50 @@ class FinderBox(Listbox):
     
     def selectpath(self):
         d = filedialog.askdirectory()
+        # testing in adrnoid
+        # d = '/storage/0000-0000/Mus/2011/Encore'
         self.searchpath = Path(d)
         self.search()
     
     def search(self):
+        try:
+            if self.mp3:
+                self.mp3.stop()
+        except Exception as e:
+                print('no current mp3 playing', e)
         results = self.searchpath.rglob('**/*.mp3')
         if not self.entries:
             self.entries = []
-        for i, r in enumerate(results):
-            entry = Entry(i, r)
-            self.entries.append(entry)
-            self.insert(END, entry.text)
-            self.yview(END)
-            self.update()
+            for i, r in enumerate(results):
+                entry = Entry(i, r)
+                self.entries.append(entry)
+                self.insert(END, entry.text)
+                self.yview(END)
+                self.update()
+        else:
+            filenames = {str(e.file):id for id, e in enumerate(self.entries)}
+            #print('filenames')
+            #pprint(filenames)
+            for i, r in enumerate(results):
+                #print('result', r)
+                file_id = filenames.get(str(r))
+                print(file_id)
+                #filenames[r]=222
+                if file_id:
+                    entry = self.entries[file_id]
+                    self.delete(file_id)
+                    self.insert(file_id, entry.text)
+                else:
+                    entry = Entry(i, r)
+                    self.entries.append(entry)
+                    self.insert(END, entry.text)
+                    self.yview(END)
+                    self.update()              
+            print('filenames')
+            pprint(filenames)
         self._mp3_as_uri()
         self.mp3 = vlc.MediaPlayer(self.current_mp3uri)
-        # self.time = IntVar(master=self, value=self.mp3.get_time())
+        
 
     def _mp3_as_uri(self):
         # f = self.get(self.current_mp3id)
@@ -204,15 +233,36 @@ class Controller(FinderBox):
                     f.write('\n')
         print('Playlist exported to: ', filepath)
 
-    def import_playlist(self, playlist):
+    def import_playlist(self, importpath=None):
         """Imports from m3u file"""
-        with open(playlist, 'w') as f:
-            filenames = {e.file:id for id, e in enumerate(self.entries)}
-            for line in f.readlines():
+        if not importpath:
+            initialdir = Path.cwd()
+            playlistpath = filedialog.askopenfile(initialdir=initialdir, filetypes = (("Playlist","*.m3u"),("all files","*.*")))
+        print('reading', playlistpath)
+        playlist = Path(playlistpath.name)
+        with open(playlist, 'r') as f:
+            if not self.entries:
+                filenames=dict()
+                self.entries = list()
+                last_id = 0
+            else:
+                filenames = {str(e.file):id for id, e in enumerate(self.entries)}
+                last_id = len(self.entries)-1
+            lines = f.read().splitlines()
+            for line in lines:
+                print(line)
                 file_id = filenames.get(line)
                 if file_id:
-                    self.entries[file_id].favorite = True
-        
+                    entry = self.entries[file_id]
+                    entry.favorite = True
+                    self.delete(file_id)
+                    self.insert(file_id, entry.text)
+                else:                	
+                	entry = Entry(last_id, line)
+                	entry.favorite = True
+                	self.entries.append(entry)
+                	self.insert(last_id, entry.text)
+                	last_id += 1        
 
     def test(self, *event):
         self.selection_set(14)
@@ -221,14 +271,14 @@ class Controller(FinderBox):
 mf = MainFrame(master=app)
 m1 = Menu(master=app)
 app.config(menu=m1)
-# lb = FinderBox(master=mf,yscrollcommand=True)
 ctrl = Controller(master=mf, yscrollcommand=True)
 m1.add_command(label='Search', command=ctrl.selectpath)
 m1.add_command(label='Export', command=ctrl.export)
+# android testing
+# importpath = '/sdcard/scripts/playlist.m3u'
+# importpath = filedialog.askdirectory()
+import_cmd = partial(ctrl.import_playlist, importpath=None)
+m1.add_command(label='Import', command=import_cmd)
 
 control = PlayerControl(master=mf, box=ctrl)
-# b1 = FindBtn(master=mf, text='Search',command=lb.selectpath)
-# b2 = FindBtn(master=mf, text='Search',command=lb.selectpath)
-# b1.pack()
-# b2.pack()
 app.mainloop()
