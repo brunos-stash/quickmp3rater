@@ -57,7 +57,7 @@ class FinderBox(Listbox):
     
     def selectpath(self):
         d = filedialog.askdirectory()
-        # testing in adrnoid
+        # testing in android
         # d = '/storage/0000-0000/Mus/2011/Encore'
         self.searchpath = Path(d)
         self.search()
