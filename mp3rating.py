@@ -242,7 +242,9 @@ class Controller(FinderBox):
         """Export to m3u playlist."""
         if not name:
             name = 'playlist.m3u'
-            filepath = CWD / name
+            filepath = Path.cwd() / name
+            # print('filepath:', filepath)
+            # print('Path.cwd()',Path.cwd())
         with open(filepath, 'w') as f:
             for entry in self.entries:
                 if entry.favorite:
@@ -253,7 +255,7 @@ class Controller(FinderBox):
     def import_playlist(self, importpath=None):
         """Imports from m3u file"""
         if not importpath:
-            initialdir = CWD
+            initialdir = Path.cwd()
             playlistpath = filedialog.askopenfile(initialdir=initialdir, filetypes = (("Playlist","*.m3u"),("all files","*.*")))
         print('reading', playlistpath)
         playlist = Path(playlistpath.name)
