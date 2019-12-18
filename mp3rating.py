@@ -128,16 +128,18 @@ class Controller(FinderBox):
         self.current_mp3id = 0
         self.next_mp3id = 1
         self.mp3 = vlc.MediaPlayer()
+        self.started = False
+        self.paused = False
 
     def play(self, *event):
         print('selection: ',self.curselection())
-
         # id = self.current_mp3id
         # nid = self.next_mp3id
         sid, *_ = self.curselection()
         cid = self.current_mp3id
         # self.activate(nid)
         print(sid, cid)
+        self.paused = False
         if sid != cid:
             # self.activate(nid)
             self.mp3.stop()
@@ -147,11 +149,15 @@ class Controller(FinderBox):
             uri = self.current_mp3uri
             self.mp3 = vlc.MediaPlayer(uri)
             self.mp3.play()
+            self.started = True
         else:
             if self.mp3.is_playing():
                 self.mp3.pause()
+                self.paused = True
             else:
                 self.mp3.play()
+                self.started = True
+
 
     def next(self, *event):
         # id = self.current_mp3id
@@ -284,5 +290,5 @@ m1.add_command(label='Export', command=ctrl.export)
 import_cmd = partial(ctrl.import_playlist, importpath=None)
 m1.add_command(label='Import', command=import_cmd)
 
-control = PlayerControl(master=mf, box=ctrl)
+control = PlayerControl(master=mf, box=ctrl, autoplay=True)
 app.mainloop()

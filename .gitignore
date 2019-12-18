@@ -7,3 +7,5 @@
 
 *.spec
 *.m3u
+*.code-workspace
+test.py
