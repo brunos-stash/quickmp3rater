@@ -1,5 +1,5 @@
 from pathlib import Path
-import os
+import os, sys
 # windows for python38 "libvlc.dll" is necessary
 os.add_dll_directory(r'C:\Program Files\VideoLAN\VLC')
 from tkinter import Tk, Frame, Listbox, filedialog, Button, END, Menu, IntVar
@@ -17,6 +17,13 @@ app = Tk()
 app.geometry("300x300")
 app.minsize(width=600,height=300)
 app.title('Quick MP3 Rate')
+
+
+if getattr(sys, 'frozen', False):
+    CWD = Path(sys._MEIPASS)
+else:
+    # we are running in a normal Python environment
+    CWD = Path(__file__).parent
 
 class Entry:
     def __init__(self, file_id, file):
@@ -235,7 +242,7 @@ class Controller(FinderBox):
         """Export to m3u playlist."""
         if not name:
             name = 'playlist.m3u'
-        filepath = Path.cwd() / name
+            filepath = CWD / name
         with open(filepath, 'w') as f:
             for entry in self.entries:
                 if entry.favorite:
@@ -246,7 +253,7 @@ class Controller(FinderBox):
     def import_playlist(self, importpath=None):
         """Imports from m3u file"""
         if not importpath:
-            initialdir = Path.cwd()
+            initialdir = CWD
             playlistpath = filedialog.askopenfile(initialdir=initialdir, filetypes = (("Playlist","*.m3u"),("all files","*.*")))
         print('reading', playlistpath)
         playlist = Path(playlistpath.name)
