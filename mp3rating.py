@@ -146,7 +146,7 @@ class Controller(FinderBox):
         cid = self.current_mp3id
         # self.activate(nid)
         print(sid, cid)
-        self.paused = False
+        # self.paused = False
         if sid != cid:
             # self.activate(nid)
             self.mp3.stop()
@@ -156,6 +156,7 @@ class Controller(FinderBox):
             uri = self.current_mp3uri
             self.mp3 = vlc.MediaPlayer(uri)
             self.mp3.play()
+            self.paused = False
             self.started = True
         else:
             if self.mp3.is_playing():
@@ -163,7 +164,8 @@ class Controller(FinderBox):
                 self.paused = True
             else:
                 self.mp3.play()
-                self.started = True
+                self.paused = False
+                # self.started = True
 
 
     def next(self, *event):

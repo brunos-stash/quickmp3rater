@@ -1,5 +1,6 @@
 from tkinter import Button, Label, Frame, DoubleVar, StringVar
 from tkinter.ttk import Progressbar
+from vlc import State
 
 class Progress(Progressbar):
     def __init__(self, master=None, box=None, autoplay=True, **kw):
@@ -36,7 +37,7 @@ class Progress(Progressbar):
             self.current_mp3id_str.set(f'Current MP3: {mp3id}')
             # self.length.set(self.box.mp3.get_length())
             self.pb['maximum'] = length
-            if not self.box.mp3.is_playing() and not self.box.paused:
+            if self.box.mp3.get_state()==State.Ended:
                 self.timestr.set(f'{length:.2f} / {length:.2f}')
                 if autoplay:
                     self.box.next()
