@@ -2,3 +2,8 @@
 /.vscode
 /__pycache__
 /.env38
+/build
+/dist
+
+*.spec
+*.m3u
