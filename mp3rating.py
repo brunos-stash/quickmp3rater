@@ -1,3 +1,4 @@
+from pathlib import Path
 import os
 # windows for python38 "libvlc.dll" is necessary
 os.add_dll_directory(r'C:\Program Files\VideoLAN\VLC')
